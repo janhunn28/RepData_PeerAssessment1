@@ -1,25 +1,117 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "PA1_template"
+author: "Janice Hunnings"
+date: "June 11, 2016"
+output: html_document
 ---
 
+#This is an R Markdown document for Assignment 1 of Reproducible Research Coursera Course.
 
-## Loading and preprocessing the data
+```{r, echo=FALSE}
+library(lattice)
+library(ggplot2)
+```
 
+##Loading and Preprocessing the Data
+1. Load the data.
+```{r, echo=TRUE}
+ act <- read.csv("C:/Program Files/Git/RepData_PeerAssessment1/activity/activity.csv", stringsAsFactors = FALSE)
+```
+2. Process/transform the date format of the data frame 
+```{r, echo=TRUE}
+ act$date <- as.Date(act$date, format = "%Y-%m-%d")
+```
 
+##What is the mean total number of steps taken per day?
+1. Calculate the total number of steps taken per day
+```{r, echo=TRUE}
+totstep <- tapply(act$steps, act$date, sum, na.rm=TRUE) 
+```
+2. Make a historgram of the total number of steps taken each day
+```{r, echo=TRUE}
+hist(totstep, main = "Total Steps per Day", xlab = "Total Steps" )
+```
 
-## What is mean total number of steps taken per day?
+##What is the mean and median number of steps taken per day?
+```{r, echo=TRUE}
+mean <- mean(totstep, na.rm = TRUE)
+median <- median(totstep, na.rm = TRUE)
+```
+###The mean number of steps taken each day is: 
+```{r, echo=FALSE}
+print(mean)
+```
+###The median number of steps taken each day is:
+```{r, echo=FALSE}
+print(median)
+```
+##Time Series plot of the average number of steps taken.  
+First, compute the means of steps taken over all days by the time interval. Create a plot of the 5-minute
+intervals, the mean number of steps and over all of the days.
+```{r, echo=TRUE}
+msbi <- tapply(act$steps, act$interval, mean, na.rm=TRUE)
 
+plot(row.names(msbi), msbi, type = 'l', xlab = "5 Minute Time Intervals", 
+     ylab = "Mean number of steps taken", main = "Average Number of Steps Taken by 5 Minute Interval")
+```
 
+##The 5-Minute Interval that, on average, contains the maximum number of steps
+```{r, echo=TRUE}
+maxsteps <- which.max(msbi)
+maxint <- names(maxsteps)
+```
+The 5-Minute interval which contains the maximum number of steps is the first number is the nth observation and the second is the actual number of max steps taken:
+```{r, echo=FALSE}
+maxsteps
+```
+##Code to describe and show a strategy for imputing missing data
+1. Calculate and report the total number of missing values in the dataset (the total
+number of rows with NA)
+```{r, echo=TRUE}
+naarray <- which(is.na(act))
+```
+The number of rows with NAs is:
+```{r, echo=TRUE}
+length(naarray)
+```
 
-## What is the average daily activity pattern?
+2. The strategy used will be to substitute the mean value for the missing values which has the "benefit of not changing the sample mean for that variable"
+http://en:wikipedia/wiki/Imputation_(statistics)#Single_imputation
+This is completed by finding the location of missing values then filling them with the mean 
+interval value.  After replacement, a check is made to sum the na values to validate that it is zero.
+```{r, echo=TRUE}
+replace <- msbi[as.character(act[naarray,3])]
+names(replace) <- naarray
+for (i in naarray) {act$steps[i] = replace[as.character(i)] }
+```
+The number of missing values is now: 
+```{r, echo=FALSE}
+sum(is.na(act))
+```
+##Histogram of the number of steps taken each day after missing values are imputed
+```{r, echo=TRUE}
+totstep2 <- tapply(act$steps, act$date, sum, na.rm=TRUE) 
+hist(totstep2, main = "Total Steps per Day with Replaced NAs", xlab = "Total Steps" )
+```
 
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
+##Panel Plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends.
+1. Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+```{r, echo=TRUE}
+wow <- function(date) {
+    if (weekdays(as.Date(date)) %in% c("Saturday", "Sunday")) {
+        "weekend"
+    } else {
+        "weekday"
+    }
+}
+act$wday <- as.factor(sapply(act$date, FUN=wow))
+str(act)
+```
+2. Make a panel plot containing a time series plot of the 5-minute interval(x-axis) and 
+the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
+```{r, echo=TRUE}
+msbi2 <- aggregate(act$steps, by=list(act$interval, act$wday),mean)
+names(msbi2) <- c("interval", "wday", "steps")
+xyplot(steps ~ interval | wday, msbi2, type = "l", layout = c(1,2),
+       xlab = "5-Minute Interval", ylab = "Number of Steps")
+```
