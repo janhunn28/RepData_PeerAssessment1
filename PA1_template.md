@@ -124,6 +124,22 @@ hist(totstep2, main = "Total Steps per Day with Replaced NAs", xlab = "Total Ste
 ```
 
 ![](figure/StepsNARemove -1.png)
+##What is the mean and median number of steps taken per day?
+
+```r
+meant <- mean(totstep2, na.rm = TRUE)
+mediant <- median(totstep2, na.rm = TRUE)
+```
+###The mean number of steps taken each day is: 
+
+```
+## [1] 10766.19
+```
+###The median number of steps taken each day is:
+
+```
+## [1] 10766.19
+```
 
 ##Panel Plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends.
 1. Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.

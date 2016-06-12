@@ -97,6 +97,19 @@ sum(is.na(act))
 totstep2 <- tapply(act$steps, act$date, sum, na.rm=TRUE) 
 hist(totstep2, main = "Total Steps per Day with Replaced NAs", xlab = "Total Steps" )
 ```
+##What is the mean and median number of steps taken per day?
+```{r, echo=TRUE}
+meant <- mean(totstep2, na.rm = TRUE)
+mediant <- median(totstep2, na.rm = TRUE)
+```
+###The mean number of steps taken each day is: 
+```{r, echo=FALSE}
+print(meant)
+```
+###The median number of steps taken each day is:
+```{r, echo=FALSE}
+print(mediant)
+```
 
 ##Panel Plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends.
 1. Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
