@@ -6,6 +6,10 @@ June 10, 2016
 
 
 ```
+## Warning: package 'knitr' was built under R version 3.2.4
+```
+
+```
 ## Warning: package 'lattice' was built under R version 3.2.5
 ```
 
@@ -37,7 +41,7 @@ totstep <- tapply(act$steps, act$date, sum, na.rm=TRUE)
 hist(totstep, main = "Total Steps per Day", xlab = "Total Steps" )
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)
+![](figure/totalstep-1.png)
 
 ##What is the mean and median number of steps taken per day?
 
@@ -66,7 +70,7 @@ plot(row.names(msbi), msbi, type = 'l', xlab = "5 Minute Time Intervals",
      ylab = "Mean number of steps taken", main = "Average Number of Steps Taken by 5 Minute Interval")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-9-1.png)
+![](figure/AvgNum-1.png)
 
 ##The 5-Minute Interval that, on average, contains the maximum number of steps
 
@@ -119,7 +123,7 @@ totstep2 <- tapply(act$steps, act$date, sum, na.rm=TRUE)
 hist(totstep2, main = "Total Steps per Day with Replaced NAs", xlab = "Total Steps" )
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-16-1.png)
+![](figure/StepsNARemove -1.png)
 
 ##Panel Plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends.
 1. Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
@@ -153,4 +157,4 @@ xyplot(steps ~ interval | wday, msbi2, type = "l", layout = c(1,2),
        xlab = "5-Minute Interval", ylab = "Number of Steps")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-18-1.png)
+![](figure/TimeSeries-1.png)

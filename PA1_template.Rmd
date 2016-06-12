@@ -10,8 +10,10 @@ output:
 #This is an R Markdown document for Assignment 1 of Reproducible Research Coursera Course.
 
 ```{r, echo=FALSE}
+library(knitr)
 library(lattice)
 library(ggplot2)
+opts_chunk$set(fig.path = "figure/")
 ```
 
 ##Loading and Preprocessing the Data
@@ -30,7 +32,7 @@ library(ggplot2)
 totstep <- tapply(act$steps, act$date, sum, na.rm=TRUE) 
 ```
 2. Make a historgram of the total number of steps taken each day
-```{r, echo=TRUE}
+```{r totalstep, echo=TRUE}
 hist(totstep, main = "Total Steps per Day", xlab = "Total Steps" )
 ```
 
@@ -50,7 +52,7 @@ print(median)
 ##Time Series plot of the average number of steps taken.  
 First, compute the means of steps taken over all days by the time interval. Create a plot of the 5-minute
 intervals, the mean number of steps and over all of the days.
-```{r, echo=TRUE}
+```{r AvgNum, echo=TRUE}
 msbi <- tapply(act$steps, act$interval, mean, na.rm=TRUE)
 
 plot(row.names(msbi), msbi, type = 'l', xlab = "5 Minute Time Intervals", 
@@ -91,7 +93,7 @@ The number of missing values is now:
 sum(is.na(act))
 ```
 ##Histogram of the number of steps taken each day after missing values are imputed
-```{r, echo=TRUE}
+```{r StepsNARemove , echo=TRUE}
 totstep2 <- tapply(act$steps, act$date, sum, na.rm=TRUE) 
 hist(totstep2, main = "Total Steps per Day with Replaced NAs", xlab = "Total Steps" )
 ```
@@ -111,7 +113,7 @@ str(act)
 ```
 2. Make a panel plot containing a time series plot of the 5-minute interval(x-axis) and 
 the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
-```{r, echo=TRUE}
+```{r TimeSeries, echo=TRUE}
 msbi2 <- aggregate(act$steps, by=list(act$interval, act$wday),mean)
 names(msbi2) <- c("interval", "wday", "steps")
 xyplot(steps ~ interval | wday, msbi2, type = "l", layout = c(1,2),
