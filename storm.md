@@ -25,13 +25,6 @@ by event type (variable EVTYPE).  EVTYPE is a factor variable with 985 different
 Load storm data into a data frame.
 
 
-```
-## Warning: package 'plyr' was built under R version 3.2.4
-```
-
-```
-## Warning: package 'ggplot2' was built under R version 3.2.5
-```
 
 
 ```r
@@ -65,7 +58,7 @@ length(unique(harmful_data$EVTYPE))
 ```
 There are 220 different types of Event Types which can likely be cleaned and catergorized.  
 
-First, let's change the event type to all upper case, remove 
+First, let's change the event type to all lower case, remove 
 spaces and check unique values again:
 
 
@@ -134,34 +127,104 @@ It is clearly seen by these graphs that Tornadoes cause the most fatalities and
 the most injuries to the human population.
 
 ###Answer to the Second Question
-The second data frame will be subset by the variables that reference Damage which
-are PROPDMG, PROPDMGEXP, CROPDMG and CROPDMGEXP.    
+In order to answer the questions about property damage, we must create two 
+data frames, one for property damage and one for crop damage.  The variables 
+to be used are PROPDMG, PROPDMGEXP, CROPDMG and CROPDMGEXP.    
 
 
 ```r
 #First grab only the columns of interest for property damage which are
-# EVTYPE, FATALITIES and INJURIES
+# EVTYPE, PROPDMG and PROPDMGEXP
 prop_damage <- storm_data[,c("EVTYPE", "PROPDMG", "PROPDMGEXP")]
-#Now reduce further by only pulling rows with non zero Fatalities and Injuries
-prop_damage <- subset(prop_damage, prop_damage$PRPDMG > 0 | prop_damage$PROPDMGEXP >0)   
-```
-
-```
-## Warning in Ops.factor(prop_damage$PROPDMGEXP, 0): '>' not meaningful for
-## factors
-```
-
-```r
-#Now create a second data frame for Crop Damage takeing the column of interest
+#Now create a second data frame for Crop Damage taking the column of interest
 # which are EVTYPE, CROPDMG and CROPDMGEXP 
 crop_damage <- storm_data[,c("EVTYPE", "CROPDMG", "CROPDMGEXP")]
-#Now reduce further by only pulling rows with non zero Fatalities and Injuries
-crop_damage <- subset(crop_damage, crop_damage$CROPDMG > 0 | crop_damage$CROPDMGEXP >0)   
+```
+
+
+From these created data frames, it shows that the two variables PROPDMGEXP and 
+CROPDMGEXP are the exponents that needs to be used in conjunction with 
+PRODDMG and CROPDMG, respectively.  In order to apply the correct exponent 
+ 
+
+```r
+#First grab only the columns of interest for property damage which are
+# EVTYPE, PROPDMG and PROPDMGEXP
+prop_damage <- storm_data[,c("EVTYPE", "PROPDMG", "PROPDMGEXP")]
+#Now create a second data frame for Crop Damage taking the column of interest
+# which are EVTYPE, CROPDMG and CROPDMGEXP 
+crop_damage <- storm_data[,c("EVTYPE", "CROPDMG", "CROPDMGEXP")]
+
+#This function will be used to calculate the exponent to use with the DMG variable
+expon <- function(e) {
+  if (e %in% "h") return(2)
+  else if (e %in% "k") return(3)
+  else if (e %in% "m") return(6)
+  else if (e %in% "b") return(9)
+  else if (!is.na(as.numeric(e))) return (as.numeric(e))
+  else  {return(0)}
+}
+
+#In order to call the function, let's make the PROPDMGEXP and CROPDMGEXP
+#consistent by changing them to lowercase and let's also just keep any 
+#value greater than 0
+
+prop_damage$PROPDMGEXP <- tolower(prop_damage$PROPDMGEXP) 
+prop_damage <- prop_damage[(prop_damage$PROPDMG > 0),]
+crop_damage$CROPDMGEXP <- tolower(crop_damage$CROPDMGEXP)
+crop_damage <- crop_damage[(crop_damage$CROPDMG > 0),]
+
+#Let's also change the Event Type(EVTYPE) to lower case and 
+#remove spaces for future ordering.
+
+prop_damage$EVTYPE <- tolower(prop_damage$EVTYPE) 
+crop_damage$EVTYPE <- tolower(crop_damage$EVTYPE) 
+prop_damage$EVTYPE <- gsub(" ", "", prop_damage$EVTYPE)
+crop_damage$EVTYPE <- gsub(" ", "", crop_damage$EVTYPE)
+
+tot_prop_expon <- sapply(prop_damage$PROPDMGEXP, FUN=expon)
+tot_crop_expon <- sapply(crop_damage$CROPDMGEXP, FUN=expon)
+
+prop_damage$Total <- prop_damage$PROPDMG * (10 ** tot_prop_expon)
+crop_damage$Total <- crop_damage$CROPDMG * (10 ** tot_crop_expon)
+
+Eco_prop_damage <- ddply(prop_damage, "EVTYPE", summarize, sum = sum(Total))
+Eco_crop_damage <- ddply(crop_damage, "EVTYPE", summarize, sum = sum(Total))
+```
+The top five number of storm events for fatalities are:
+
+```r
+pd <- Eco_prop_damage[order(-Eco_prop_damage$sum)[1:5],]
+pd
 ```
 
 ```
-## Warning in Ops.factor(crop_damage$CROPDMGEXP, 0): '>' not meaningful for
-## factors
+##                EVTYPE          sum
+## 54              flood 144657709807
+## 155 hurricane/typhoon  69305840000
+## 294           tornado  56947380677
+## 249        stormsurge  43323536000
+## 41         flashflood  16822723979
 ```
+
+The top five number of storm events for injuries are:
+
+```r
+cd <- Eco_crop_damage[order(-Eco_crop_damage$sum)[1:5],]
+cd
+```
+
+```
+##        EVTYPE         sum
+## 9     drought 13972566000
+## 25      flood  5661968450
+## 74 riverflood  5029459000
+## 68   icestorm  5022113500
+## 38       hail  3025954473
+```
+
+
+
+
 
 ## Analysis
