@@ -11,7 +11,7 @@
 
 <meta name="author" content="Janice Hunnings" />
 
-<meta name="date" content="2016-06-19" />
+<meta name="date" content="2016-06-26" />
 
 <title>Exploration of NOAA Data with Regard to Severe Storm Events</title>
 
@@ -111,7 +111,7 @@ $(document).ready(function () {
 
 <h1 class="title">Exploration of NOAA Data with Regard to Severe Storm Events</h1>
 <h4 class="author"><em>Janice Hunnings</em></h4>
-<h4 class="date"><em>June 19, 2016</em></h4>
+<h4 class="date"><em>June 26, 2016</em></h4>
 
 </div>
 
@@ -154,9 +154,23 @@ length(unique(harmful_data$EVTYPE))</code></pre>
 <pre class="r"><code>order_fatal &lt;- ddply(harmful_data, &quot;EVTYPE&quot;, summarize, sum = sum(FATALITIES) )
 order_injury &lt;- ddply(harmful_data, &quot;EVTYPE&quot;, summarize, sum = sum(INJURIES) )</code></pre>
 <p>The top five number of storm events for fatalities are:</p>
-<pre class="r"><code>of &lt;- order_fatal[order(-order_fatal$sum)[1:5],]</code></pre>
+<pre class="r"><code>of &lt;- order_fatal[order(-order_fatal$sum)[1:5],]
+of</code></pre>
+<pre><code>##            EVTYPE  sum
+## 167       tornado 5633
+## 26  excessiveheat 1903
+## 35     flashflood  978
+## 60           heat  937
+## 109     lightning  816</code></pre>
 <p>The top five number of storm events for injuries are:</p>
-<pre class="r"><code>oi &lt;- order_injury[order(-order_injury$sum)[1:5],]</code></pre>
+<pre class="r"><code>oi &lt;- order_injury[order(-order_injury$sum)[1:5],]
+oi</code></pre>
+<pre><code>##            EVTYPE   sum
+## 167       tornado 91346
+## 174      tstmwind  6957
+## 40          flood  6789
+## 26  excessiveheat  6525
+## 109     lightning  5230</code></pre>
 <p>Now, plots are created that will clearly answer the question regarding which storm events are most harmful.</p>
 <ol style="list-style-type: decimal">
 <li>Plot for Fatalities per Storm Event</li>
@@ -178,22 +192,15 @@ g</code></pre>
 </div>
 <div id="answer-to-the-second-question" class="section level3">
 <h3>Answer to the Second Question</h3>
-<p>In order to answer the questions about property damage, we must create two data frames, one for property damage and one for crop damage. The variables to be used are PROPDMG, PROPDMGEXP, CROPDMG and CROPDMGEXP.</p>
+<p>In order to answer the question about economic damage, we must create two data frames, one for property damage and one for crop damage. The variables to be used are PROPDMG, PROPDMGEXP, CROPDMG and CROPDMGEXP.</p>
 <pre class="r"><code>#First grab only the columns of interest for property damage which are
 # EVTYPE, PROPDMG and PROPDMGEXP
 prop_damage &lt;- storm_data[,c(&quot;EVTYPE&quot;, &quot;PROPDMG&quot;, &quot;PROPDMGEXP&quot;)]
 #Now create a second data frame for Crop Damage taking the column of interest
 # which are EVTYPE, CROPDMG and CROPDMGEXP 
 crop_damage &lt;- storm_data[,c(&quot;EVTYPE&quot;, &quot;CROPDMG&quot;, &quot;CROPDMGEXP&quot;)]</code></pre>
-<p>From these created data frames, it shows that the two variables PROPDMGEXP and CROPDMGEXP are the exponents that needs to be used in conjunction with PRODDMG and CROPDMG, respectively. In order to apply the correct exponent</p>
-<pre class="r"><code>#First grab only the columns of interest for property damage which are
-# EVTYPE, PROPDMG and PROPDMGEXP
-prop_damage &lt;- storm_data[,c(&quot;EVTYPE&quot;, &quot;PROPDMG&quot;, &quot;PROPDMGEXP&quot;)]
-#Now create a second data frame for Crop Damage taking the column of interest
-# which are EVTYPE, CROPDMG and CROPDMGEXP 
-crop_damage &lt;- storm_data[,c(&quot;EVTYPE&quot;, &quot;CROPDMG&quot;, &quot;CROPDMGEXP&quot;)]
-
-#This function will be used to calculate the exponent to use with the DMG variable
+<p>From these created data frames, it shows that the two variables PROPDMGEXP and CROPDMGEXP which are exponential values and need to be applied to PROPDMG and CROPDMG, respectively, in order to accurately calculate the correct damage values.</p>
+<pre class="r"><code>#This function will be used to calculate the exponent to use with the DMG variable
 expon &lt;- function(e) {
   if (e %in% &quot;h&quot;) return(2)
   else if (e %in% &quot;k&quot;) return(3)
@@ -204,31 +211,32 @@ expon &lt;- function(e) {
 }
 
 #In order to call the function, let's make the PROPDMGEXP and CROPDMGEXP
-#consistent by changing them to lowercase and let's also just keep any 
-#value greater than 0
+#consistent by changing them to lowercase and also remove values that are 0
 
 prop_damage$PROPDMGEXP &lt;- tolower(prop_damage$PROPDMGEXP) 
 prop_damage &lt;- prop_damage[(prop_damage$PROPDMG &gt; 0),]
 crop_damage$CROPDMGEXP &lt;- tolower(crop_damage$CROPDMGEXP)
 crop_damage &lt;- crop_damage[(crop_damage$CROPDMG &gt; 0),]
 
-#Let's also change the Event Type(EVTYPE) to lower case and 
-#remove spaces for future ordering.
+#Clean up the Event Type(EVTYPE) to lower case and remove spaces for future sorting.
 
 prop_damage$EVTYPE &lt;- tolower(prop_damage$EVTYPE) 
 crop_damage$EVTYPE &lt;- tolower(crop_damage$EVTYPE) 
 prop_damage$EVTYPE &lt;- gsub(&quot; &quot;, &quot;&quot;, prop_damage$EVTYPE)
 crop_damage$EVTYPE &lt;- gsub(&quot; &quot;, &quot;&quot;, crop_damage$EVTYPE)
 
+
+#Apply the exponential function to correctly create totals.
 tot_prop_expon &lt;- sapply(prop_damage$PROPDMGEXP, FUN=expon)
 tot_crop_expon &lt;- sapply(crop_damage$CROPDMGEXP, FUN=expon)
 
 prop_damage$Total &lt;- prop_damage$PROPDMG * (10 ** tot_prop_expon)
 crop_damage$Total &lt;- crop_damage$CROPDMG * (10 ** tot_crop_expon)
 
+#Using ddply, the totals are summarized.
 Eco_prop_damage &lt;- ddply(prop_damage, &quot;EVTYPE&quot;, summarize, sum = sum(Total))
 Eco_crop_damage &lt;- ddply(crop_damage, &quot;EVTYPE&quot;, summarize, sum = sum(Total))</code></pre>
-<p>The top five number of storm events for fatalities are:</p>
+<p>The top five number of storm events for property damage are:</p>
 <pre class="r"><code>pd &lt;- Eco_prop_damage[order(-Eco_prop_damage$sum)[1:5],]
 pd</code></pre>
 <pre><code>##                EVTYPE          sum
@@ -237,7 +245,7 @@ pd</code></pre>
 ## 294           tornado  56947380677
 ## 249        stormsurge  43323536000
 ## 41         flashflood  16822723979</code></pre>
-<p>The top five number of storm events for injuries are:</p>
+<p>The top five number of storm events for crop damage are:</p>
 <pre class="r"><code>cd &lt;- Eco_crop_damage[order(-Eco_crop_damage$sum)[1:5],]
 cd</code></pre>
 <pre><code>##        EVTYPE         sum
@@ -246,10 +254,26 @@ cd</code></pre>
 ## 74 riverflood  5029459000
 ## 68   icestorm  5022113500
 ## 38       hail  3025954473</code></pre>
+<p>Now, for clarity, a plot is created for Total Economic Damage per Storm Event. This will combine both property damage and crop damage.</p>
+<pre class="r"><code>m &lt;- ddply(rbind(pd, cd), .(EVTYPE), summarize, sum_count = sum(sum))
+
+g &lt;- ggplot(m, aes(EVTYPE, sum_count))
+g &lt;- g + geom_point() 
+g &lt;- g + ggtitle(&quot;Top Storm Events Causing the Most Economic Damage&quot;) + xlab(&quot;Event Type&quot;) + ylab(&quot;Economic Damage&quot;)
+g</code></pre>
+<p><img src="data:image/png;base64,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" /></p>
+<p>From the lists and graph, it is obvious to see that Floods cause the most economic damage.</p>
 </div>
 </div>
-<div id="analysis" class="section level2">
-<h2>Analysis</h2>
+<div id="results" class="section level2">
+<h2>Results</h2>
+<p>In summary, the answers to the following questions,</p>
+<ol style="list-style-type: decimal">
+<li>Across the United States, which types of events are the most harmful with respect to population health?</li>
+<li>Across the United States, which types of events have the greatest economic consequences?</li>
+</ol>
+<p>are obtained using just a few tools in R and the data from the U.S. National Oceanic and Atmospheric Administration’s (NOAA) storm data. For accuracy, time and analysis of the data was completed to clean it.</p>
+<p>The storm events which are most harmful to human population health are tornadoes. The storm events which are have the greatest economic consequences are floods.</p>
 </div>
 
 
